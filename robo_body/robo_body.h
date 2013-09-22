@@ -35,10 +35,22 @@ const int servoTailDefaultState = 90;
 // Pin for measuring battery voltage (analog in).
 const int batterySensorPin[TOTAL_TIMERS] = {A5, A4};
 
-const float voltPerUnit = 0.004883; // 5V/1024 values = 0,004883 V/value
-const float dividerRatio0 = 5; // (R1+R2)/R2
-const float dividerRatio1 = 5; // (R1+R2)/R2
-const float voltRatio[TOTAL_TIMERS] = {voltPerUnit * dividerRatio0*100, voltPerUnit * dividerRatio1*100}; // This coefficient we will use
+// To decrease error measurement we need one more coefficient.
+// At first we should set it to 1.0. Then upload the sketch and run serial monitor.
+// Type =0000, the answer will be voltage of the batteary in hex * 100.
+// ~0332 e.g. Value 332h means 818 or 8.18 volts. But the voltmeter shows 8.13 volts.
+// To correct this measure error we use voltmeterCorrection coef equal to 8.18 / 8.13.
+const float voltmeterCorrection = 8.18 / 8.13;  // Voltmeter correction
+// How to get voltPerUnit value:
+// Take voltmeter and meassure voltage between AREF and GND pins
+// on Arduino controller and divide it by 1024.
+const float voltPerUnit = 4.95/1024;
+const float dividerRatio0 = (4.7 + 7.5) / 4.7; // (R1+R2)/R2
+const float dividerRatio1 = (4.7 + 7.5) / 4.7; // (R1+R2)/R2
+const float voltRatio[TOTAL_TIMERS] = {
+  voltPerUnit * dividerRatio0 * 100 * voltmeterCorrection, 
+  voltPerUnit * dividerRatio1 * 100 * voltmeterCorrection
+}; // This coefficient we will use
 
 const long MINIMAL_INTERVAL_VALUE = 1000; // Minimum interval in milliseconds for Timer
 
