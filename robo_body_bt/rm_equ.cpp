@@ -1,19 +1,32 @@
+#include <SmartServo.h>
 #include "rm_equ.h"
 #include "rm_cfg.h"
+#include "rm_div.h"
+
+#ifdef USBCON    // For Leonardo (Romeo V2) board we use SoftwareServo library, because of lack of Timers.
+  #include <SoftwareServo.h>
+#else
+  #include <Servo.h>
+#endif
 
 using namespace robot_mitya;
 
-Servo* servoHeadHorizontal = new Servo();
-Servo* servoHeadVertical = new Servo();
-Servo* servoTail = new Servo();
+static SmartServo* servoHeadHorizontal = new SmartServo();
+static SmartServo* servoHeadVertical = new SmartServo();
+static SmartServo* servoTail = new SmartServo();
+
+static VoltageDivider* voltageDividerBattery = new VoltageDivider(Cfg::VOLTAGE_BATTERY_DIVIDER_INDEX,
+  Cfg::VOLTAGE_BATTERY_PIN, Cfg::AREF_VOLTAGE, Cfg::VOLTAGE_BATTERY_R1, Cfg::VOLTAGE_BATTERY_R2);
+static VoltageDivider* voltageDividerCharger = new VoltageDivider(Cfg::VOLTAGE_CHARGER_DIVIDER_INDEX,
+  Cfg::VOLTAGE_CHARGER_PIN, Cfg::AREF_VOLTAGE, Cfg::VOLTAGE_CHARGER_R1, Cfg::VOLTAGE_CHARGER_R2);
 
 void Equipment::initialize()
 {
   // Initializing headlights:
   pinMode(Cfg::LIGHT_PIN, OUTPUT);
-  digitalWrite(Cfg::LIGHT_PIN, LOW);
+  setHeadlightState(0);
 
-  // Initializng and setting horizontal servo into install-phone position:
+  // Initializing and setting horizontal servo into install-phone position:
   pinMode(Cfg::SERVO_HEAD_HORIZONTAL_PIN, OUTPUT);
   servoHeadHorizontal->attach(
     Cfg::SERVO_HEAD_HORIZONTAL_PIN,
@@ -21,7 +34,7 @@ void Equipment::initialize()
     Cfg::SERVO_HEAD_HORIZONTAL_MAX_DEGREE);
   moveHead("H", Cfg::SERVO_HEAD_HORIZONTAL_DEFAULT_STATE);
 
-  // Initializng and setting vertical servo into install-phone position:
+  // Initializing and setting vertical servo into install-phone position:
   pinMode(Cfg::SERVO_HEAD_VERTICAL_PIN, OUTPUT);
   servoHeadVertical->attach(
     Cfg::SERVO_HEAD_VERTICAL_PIN,
@@ -36,6 +49,42 @@ void Equipment::initialize()
     Cfg::SERVO_TAIL_MIN_DEGREE,
     Cfg::SERVO_TAIL_MAX_DEGREE);
   moveTail(Cfg::SERVO_TAIL_DEFAULT_STATE);
+
+  // Motors initializing:
+  pinMode(Cfg::MOTOR_LEFT_SPEED_PIN, OUTPUT);
+  pinMode(Cfg::MOTOR_LEFT_DIRECTION_PIN, OUTPUT);
+  pinMode(Cfg::MOTOR_RIGHT_SPEED_PIN, OUTPUT);
+  pinMode(Cfg::MOTOR_RIGHT_DIRECTION_PIN, OUTPUT);
+  moveMotor("G", 0);
+}
+
+void Equipment::refresh()
+{
+  voltageDividerBattery->refresh();
+  voltageDividerCharger->refresh();
+  
+  // Swinging head in horizontal plane.
+  if (servoHeadHorizontal->update())
+  {
+    // We know the angle here, we can transmit...
+  }
+
+  // Swinging head in vertical plane.
+  if (servoHeadVertical->update())
+  {
+    // We know the angle here, we can transmit...
+  }
+
+  // Tail swinging.
+  if (servoTail->update())
+  {
+    // We know the angle here, we can transmit...
+  }
+  
+  // For Leonardo (Romeo V2) board we use SoftwareServo library because of Timers lack.
+  #ifdef USBCON
+    SoftwareServo::refresh();
+  #endif
 }
 
 void Equipment::setHeadlightState(int value)
@@ -52,6 +101,8 @@ void Equipment::setHeadlightState(int value)
 
 void Equipment::moveHead(String plane, int degree)
 {
+  servoHeadHorizontal->stop();
+  servoHeadVertical->stop();
   if (plane == "H") // (horizontal plane)
   {
     servoHeadHorizontal->write(degree);
@@ -62,9 +113,52 @@ void Equipment::moveHead(String plane, int degree)
   }
 }
 
+void Equipment::rotateHead(String plane, signed int period)
+{
+  if (plane == "h") // (horizontal plane)
+  {
+    servoHeadHorizontal->stop();
+    servoHeadHorizontal->startTurn(period, true);
+  }
+  else if (plane == "v") // (vertical plane)
+  {
+    servoHeadVertical->stop();
+    servoHeadVertical->startTurn(period, true);
+  }
+}
+
+void Equipment::swingHead(String plane, int mode)
+{
+  if (plane == "n") // (horizontal plane)
+  {
+    servoHeadHorizontal->stop();
+    if ((mode == 1) || (mode == 2))
+    {
+      servoHeadHorizontal->startSwing(mode, 400, 2.5, 60, 0.75, true);
+    }
+  }
+  else if (plane == "y") // (vertical plane)
+  {
+    servoHeadVertical->stop();
+    if ((mode == 1) || (mode == 2))
+    {
+      servoHeadVertical->startSwing(mode, 400, 2.5, 30, 0.8, true);
+    }
+  }
+}
+
 void Equipment::moveTail(int degree)
 {
   servoTail->write(degree);
+}
+
+void Equipment::swingTail(int mode)
+{
+  servoTail->stop();
+  if ((mode == 1) || (mode == 2))
+  {
+    servoTail->startSwing(mode, 250, 6, 70, 0.9, true);
+  }
 }
 
 void Equipment::moveMotor(String side, int speed)
@@ -91,6 +185,36 @@ void Equipment::moveMotor(String side, int speed)
   if ((side == "R") || (side == "G")) {
     digitalWrite(Cfg::MOTOR_RIGHT_DIRECTION_PIN, directionPinValue);
     analogWrite(Cfg::MOTOR_RIGHT_SPEED_PIN, speed);
+  }
+}
+
+unsigned int Equipment::getVoltageDividerPinValue(int dividerPin)
+{
+  return analogRead(dividerPin);
+}
+
+unsigned int Equipment::getVoltage(int dividerIndex)
+{
+  if (dividerIndex == Cfg::VOLTAGE_BATTERY_DIVIDER_INDEX)
+  {
+    return voltageDividerBattery->getVoltage();
+  }
+  if (dividerIndex == Cfg::VOLTAGE_CHARGER_DIVIDER_INDEX)
+  {
+    return voltageDividerCharger->getVoltage();
+  }
+  return 0;
+}
+
+void Equipment::setVoltageTimer(int dividerIndex, int timerDelay, void (*handler)(int, unsigned int))
+{
+  if (dividerIndex == Cfg::VOLTAGE_BATTERY_DIVIDER_INDEX)
+  {
+    voltageDividerBattery->setTimer(timerDelay, handler);
+  }
+  else if (dividerIndex == Cfg::VOLTAGE_CHARGER_DIVIDER_INDEX)
+  {
+    voltageDividerCharger->setTimer(timerDelay, handler);
   }
 }
 

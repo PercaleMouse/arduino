@@ -9,12 +9,6 @@
 #ifndef rm_equ_h
 #define rm_equ_h
 
-// For Leonardo (Romeo V2) board we use SoftwareServo library, because of Timers lack.
-#ifdef USBCON
-  #include <SoftwareServo.h>
-#else
-  #include <Servo.h>
-#endif
 #include <Arduino.h>
 
 namespace robot_mitya
@@ -23,10 +17,22 @@ namespace robot_mitya
   {
     public:
       static void initialize();
+      static void refresh();      
+      
       static void setHeadlightState(int value);
+      
       static void moveHead(String plane, int degree);
+      static void rotateHead(String plane, signed int period);
+      static void swingHead(String plane, int mode);
+
       static void moveTail(int degree);
+      static void swingTail(int mode);
+
       static void moveMotor(String side, int speed);
+      
+      static unsigned int getVoltageDividerPinValue(int dividerPin);
+      static unsigned int getVoltage(int dividerIndex);
+      static void setVoltageTimer(int dividerIndex, int timerDelay, void (*handler)(int, unsigned int));
   };
 }
 
