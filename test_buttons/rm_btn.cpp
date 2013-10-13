@@ -7,11 +7,12 @@ using namespace robot_mitya;
 
 static const int NUMBER_OF_BUTTONS = 5;
 static const int buttonValues[NUMBER_OF_BUTTONS] = { 30, 150, 360, 535, 760 };
+static int currentButton = -1;
 static int previousButton = -1;
 static int pressedButton = -1;
 
-//static boolean waiting = false;
-//static int pressedMillis = 0;
+static boolean waiting = false;
+static int pressedMillis = 0;
 
 void RomeoButtons::initialize()
 {
@@ -20,27 +21,32 @@ void RomeoButtons::initialize()
 
 void RomeoButtons::refresh()
 {
-  int analogValue = analogRead(Cfg::BUTTONS_PIN);
-  int button = getButton(analogValue);
-  if (button != previousButton)
+  if (!waiting)
   {
-    delay(50);      // wait for debounce time
-    analogValue = analogRead(Cfg::BUTTONS_PIN);
-    button = getButton(analogValue);
-    if (button != previousButton)
+    currentButton = getButton(analogRead(Cfg::BUTTONS_PIN));
+    waiting = true;
+    pressedMillis = millis();
+  }
+  if (currentButton != previousButton)
+  {
+    if (millis() - pressedMillis >= 50) waiting = false;
+    else return;
+      
+    currentButton = getButton(analogRead(Cfg::BUTTONS_PIN));
+    if (currentButton != previousButton)
     {
-      previousButton = button;
-      if (button != pressedButton)
+      previousButton = currentButton;
+      if (currentButton != pressedButton)
       {
         if (pressedButton >= 0)
         {
           Serial.println("released: s" + String(pressedButton + 1));
         }
       }
-      pressedButton = button;
-      if (button >= 0)
+      pressedButton = currentButton;
+      if (currentButton >= 0)
       {
-        Serial.println("pressed: s" + String(button + 1));
+        Serial.println("pressed: s" + String(currentButton + 1));
       }
     }
   }
