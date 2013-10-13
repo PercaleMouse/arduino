@@ -36,6 +36,9 @@ namespace robot_mitya
       // Headlights pin.
       static const int LIGHT_PIN = 13;
       
+      // Romeo buttons.
+      static const int BUTTONS_PIN = A0;
+      
       // Boundary values for servos.
       static const int SERVO_HEAD_HORIZONTAL_MIN_DEGREE = 0;
       static const int SERVO_HEAD_HORIZONTAL_MAX_DEGREE = 180;

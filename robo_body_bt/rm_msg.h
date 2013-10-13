@@ -23,6 +23,7 @@ namespace robot_mitya
       static void send(String command, unsigned int value);
       static void send(String message);
       static void sendResult(int resultCode);
+      static void debugOutput(String text);
       static String loadIncoming();
       static void processIncomingMessages(String incoming, void (*handler)(String, int));
     private:

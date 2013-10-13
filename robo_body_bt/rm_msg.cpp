@@ -5,21 +5,33 @@
 using namespace robot_mitya;
 
 #ifdef USBCON
-  HardwareSerial& roboSerial = Serial1;
+  #define ROBO_SERIAL Serial1
+  #define DEBUG_SERIAL Serial
 #else
-  HardwareSerial& roboSerial = Serial;
+  #define ROBO_SERIAL Serial
 #endif
 
 static String messageBuffer = "";
 
 void Message::initialize()
 {
-  roboSerial.begin(Cfg::SERIAL_BAUD_RATE);
+  ROBO_SERIAL.begin(Cfg::SERIAL_BAUD_RATE);
+#ifdef DEBUG_SERIAL
+  DEBUG_SERIAL.begin(Cfg::SERIAL_BAUD_RATE);
+#endif
+}
+
+void Message::debugOutput(String text)
+{
+#ifdef DEBUG_SERIAL
+  DEBUG_SERIAL.println();
+  DEBUG_SERIAL.println(text);
+#endif
 }
 
 void Message::send(String message)
 {
-  roboSerial.print(message);
+  ROBO_SERIAL.print(message);
 }
 
 void Message::send(String command, unsigned int value)
@@ -35,9 +47,9 @@ void Message::sendResult(int resultCode)
 
 String Message::loadIncoming()
 {
-  while (roboSerial.available() > 0)
+  while (ROBO_SERIAL.available() > 0)
   {
-    messageBuffer += (char)roboSerial.read();
+    messageBuffer += (char)ROBO_SERIAL.read();
   }
   
   return messageBuffer;
@@ -141,7 +153,7 @@ void Message::processMessage(String message, void (*handler)(String, int))
   int value;
   if (! parseMessage(message, command, value))
   {
-    roboSerial.flush();
+    ROBO_SERIAL.flush();
     sendResult(RET_WRONG_MESSAGE);
     return;
   }

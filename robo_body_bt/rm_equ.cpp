@@ -2,6 +2,7 @@
 #include "rm_equ.h"
 #include "rm_cfg.h"
 #include "rm_div.h"
+#include "rm_btn.h"
 
 #ifdef USBCON    // For Leonardo (Romeo V2) board we use SoftwareServo library, because of lack of Timers.
   #include <SoftwareServo.h>
@@ -56,6 +57,9 @@ void Equipment::initialize()
   pinMode(Cfg::MOTOR_RIGHT_SPEED_PIN, OUTPUT);
   pinMode(Cfg::MOTOR_RIGHT_DIRECTION_PIN, OUTPUT);
   moveMotor("G", 0);
+
+  // Initializing buttons:
+  pinMode(Cfg::BUTTONS_PIN, INPUT);
 }
 
 void Equipment::refresh()
@@ -80,6 +84,9 @@ void Equipment::refresh()
   {
     // We know the angle here, we can transmit...
   }
+  
+  // Handle buttons.
+  RomeoButtons::refresh();
   
   // For Leonardo (Romeo V2) board we use SoftwareServo library because of Timers lack.
   #ifdef USBCON
