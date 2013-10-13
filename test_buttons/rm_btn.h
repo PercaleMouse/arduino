@@ -13,13 +13,32 @@
 
 namespace robot_mitya
 {
+  enum ButtonState
+  {
+    RELEASED = 0,
+    PRESSED = 1
+  };
+  
+  enum Button
+  {
+    NONE = -1,
+    S1 = 0,
+    S2 = 1,
+    S3 = 2,
+    S4 = 3,
+    S5 = 4
+  };
+  
+  typedef void (*RomeoButtonsHandler)(ButtonState, Button);
+  
   class RomeoButtons
   {
     public:
-      static void initialize();
+      static void initialize(int pin);
+      static void setHandler(RomeoButtonsHandler handler);
       static void refresh();
     private:
-      static int getButton(int analogValue);
+      static Button getButton(int analogValue);
   };
 }
 

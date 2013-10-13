@@ -5,62 +5,83 @@
 
 using namespace robot_mitya;
 
+static int buttonsPin;
 static const int NUMBER_OF_BUTTONS = 5;
 static const int buttonValues[NUMBER_OF_BUTTONS] = { 30, 150, 360, 535, 760 };
-static int currentButton = -1;
-static int previousButton = -1;
-static int pressedButton = -1;
+static Button currentButton = NONE;
+static Button previousButton = NONE;
+static Button pressedButton = NONE;
 
 static boolean waiting = false;
-static int pressedMillis = 0;
+static unsigned long nextTimeMillis = 0;
+static const unsigned long DELAY_MILLIS = 50;
 
-void RomeoButtons::initialize()
+static RomeoButtonsHandler buttonsHandler;
+
+void RomeoButtons::initialize(int pin)
 {
-  pinMode(Cfg::BUTTONS_PIN, INPUT);
+  buttonsPin = pin;
+  pinMode(buttonsPin, INPUT);
+  buttonsHandler = NULL;
+}
+
+void RomeoButtons::setHandler(RomeoButtonsHandler handler)
+{
+  buttonsHandler = handler;
 }
 
 void RomeoButtons::refresh()
 {
   if (!waiting)
   {
-    currentButton = getButton(analogRead(Cfg::BUTTONS_PIN));
-    waiting = true;
-    pressedMillis = millis();
+    currentButton = getButton(analogRead(buttonsPin));
   }
   if (currentButton != previousButton)
   {
-    if (millis() - pressedMillis >= 50) waiting = false;
+    unsigned long currentTimeMillis = millis();
+    if (!waiting)
+    {
+      waiting = true;
+      nextTimeMillis = currentTimeMillis + DELAY_MILLIS;
+    }    
+    if (currentTimeMillis >= nextTimeMillis) waiting = false;
     else return;
       
-    currentButton = getButton(analogRead(Cfg::BUTTONS_PIN));
+    currentButton = getButton(analogRead(buttonsPin));
     if (currentButton != previousButton)
     {
       previousButton = currentButton;
       if (currentButton != pressedButton)
       {
-        if (pressedButton >= 0)
+        if (pressedButton != NONE)
         {
-          Serial.println("released: s" + String(pressedButton + 1));
+          if (buttonsHandler != NULL)
+          {
+            buttonsHandler(RELEASED, pressedButton);
+          }
         }
       }
       pressedButton = currentButton;
-      if (currentButton >= 0)
+      if (currentButton != NONE)
       {
-        Serial.println("pressed: s" + String(currentButton + 1));
+        if (buttonsHandler != NULL)
+        {
+          buttonsHandler(PRESSED, currentButton);
+        }
       }
     }
   }
 }
 
-int RomeoButtons::getButton(int analogValue)
+Button RomeoButtons::getButton(int analogValue)
 {
   for (int i = 0; i < NUMBER_OF_BUTTONS; i++)
   {
     if (analogValue < buttonValues[i])
     {
-      return i;  
+      return (Button)i;  
     }
   }
-  return -1;
+  return (Button)-1;
 }
 
