@@ -10,6 +10,7 @@
 #define rm_equ_h
 
 #include <Arduino.h>
+#include "rm_btn.h"
 
 namespace robot_mitya
 {
@@ -33,6 +34,8 @@ namespace robot_mitya
       static unsigned int getVoltageDividerPinValue(int dividerPin);
       static unsigned int getVoltage(int dividerIndex);
       static void setVoltageTimer(int dividerIndex, int timerDelay, void (*handler)(int, unsigned int));
+    private:
+      static void buttonsHandler(ButtonState buttonState, Button button);
   };
 }
 

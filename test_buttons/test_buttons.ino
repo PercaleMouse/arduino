@@ -35,5 +35,5 @@ void setup()
 
 void loop()
 {
-  RomeoButtons::refresh();
+  RomeoButtons::refresh(analogRead(Cfg::BUTTONS_PIN));
 }

@@ -34,9 +34,9 @@ namespace robot_mitya
   class RomeoButtons
   {
     public:
-      static void initialize(int pin);
+      static void initialize(int buttonsPin);
       static void setHandler(RomeoButtonsHandler handler);
-      static void refresh();
+      static void refresh(int analogButtonsValue);
     private:
       static Button getButton(int analogValue);
   };

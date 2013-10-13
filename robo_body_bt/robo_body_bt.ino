@@ -30,9 +30,6 @@ void setup()
   
   // Initializing controller's pins, motors, servos and headlights states
   Equipment::initialize();
-  
-  delay(10000);
-  Message::debugOutput("Hello world!");
 }
 
 // Sketch iteration

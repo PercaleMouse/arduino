@@ -1,8 +1,11 @@
 #include <SmartServo.h>
 #include "rm_equ.h"
+#include "rm_act.h"
 #include "rm_cfg.h"
 #include "rm_div.h"
 #include "rm_btn.h"
+#include "rm_msg.h"
+#include "rm_sts.h"
 
 #ifdef USBCON    // For Leonardo (Romeo V2) board we use SoftwareServo library, because of lack of Timers.
   #include <SoftwareServo.h>
@@ -59,7 +62,11 @@ void Equipment::initialize()
   moveMotor("G", 0);
 
   // Initializing buttons:
-  pinMode(Cfg::BUTTONS_PIN, INPUT);
+  RomeoButtons::initialize(Cfg::BUTTONS_PIN);
+  RomeoButtons::setHandler(Equipment::buttonsHandler);
+  
+  // Initializing robot's state:
+  State::initialize();
 }
 
 void Equipment::refresh()
@@ -86,7 +93,7 @@ void Equipment::refresh()
   }
   
   // Handle buttons.
-  RomeoButtons::refresh();
+  RomeoButtons::refresh(analogRead(Cfg::BUTTONS_PIN));
   
   // For Leonardo (Romeo V2) board we use SoftwareServo library because of Timers lack.
   #ifdef USBCON
@@ -223,5 +230,44 @@ void Equipment::setVoltageTimer(int dividerIndex, int timerDelay, void (*handler
   {
     voltageDividerCharger->setTimer(timerDelay, handler);
   }
+}
+
+void Equipment::buttonsHandler(ButtonState buttonState, Button button)
+{
+  if (button == S5)
+  {
+    if (buttonState == PRESSED) State::setNextButtonsControlMode();
+  }
+  
+  if (State::getButtonsControlMode() == OTHER_CONTROL)
+  {
+    if (button == S2)
+    {
+      if (buttonState == PRESSED) Action::execute("I", 1);
+      else if (buttonState == RELEASED) Action::execute("I", 0);
+    }
+  }
+/*
+  String s = "";
+  
+  if (buttonState == PRESSED)
+    s += "pressed ";
+  else if (buttonState == RELEASED)
+    s += "released ";
+  else
+    s += "bad state ";
+    
+  switch (button)
+  {
+    case S1: s += "S1"; break;
+    case S2: s += "S2"; break;
+    case S3: s += "S3"; break;
+    case S4: s += "S4"; break;
+    case S5: s += "S5"; break;
+    default: s += "bad button";
+  }
+  
+  Message::debugOutput(s);
+*/
 }
 

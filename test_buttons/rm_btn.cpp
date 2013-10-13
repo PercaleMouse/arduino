@@ -5,7 +5,6 @@
 
 using namespace robot_mitya;
 
-static int buttonsPin;
 static const int NUMBER_OF_BUTTONS = 5;
 static const int buttonValues[NUMBER_OF_BUTTONS] = { 30, 150, 360, 535, 760 };
 static Button currentButton = NONE;
@@ -18,9 +17,8 @@ static const unsigned long DELAY_MILLIS = 50;
 
 static RomeoButtonsHandler buttonsHandler;
 
-void RomeoButtons::initialize(int pin)
+void RomeoButtons::initialize(int buttonsPin)
 {
-  buttonsPin = pin;
   pinMode(buttonsPin, INPUT);
   buttonsHandler = NULL;
 }
@@ -30,11 +28,11 @@ void RomeoButtons::setHandler(RomeoButtonsHandler handler)
   buttonsHandler = handler;
 }
 
-void RomeoButtons::refresh()
+void RomeoButtons::refresh(int analogButtonsValue)
 {
   if (!waiting)
   {
-    currentButton = getButton(analogRead(buttonsPin));
+    currentButton = getButton(analogButtonsValue);
   }
   if (currentButton != previousButton)
   {
@@ -43,31 +41,23 @@ void RomeoButtons::refresh()
     {
       waiting = true;
       nextTimeMillis = currentTimeMillis + DELAY_MILLIS;
+      return;
     }    
     if (currentTimeMillis >= nextTimeMillis) waiting = false;
     else return;
       
-    currentButton = getButton(analogRead(buttonsPin));
+    currentButton = getButton(analogButtonsValue);
     if (currentButton != previousButton)
     {
       previousButton = currentButton;
-      if (currentButton != pressedButton)
+      if ((currentButton != pressedButton) && (pressedButton != NONE) && (buttonsHandler != NULL))
       {
-        if (pressedButton != NONE)
-        {
-          if (buttonsHandler != NULL)
-          {
-            buttonsHandler(RELEASED, pressedButton);
-          }
-        }
+        buttonsHandler(RELEASED, pressedButton);
       }
       pressedButton = currentButton;
-      if (currentButton != NONE)
+      if ((currentButton != NONE) && (buttonsHandler != NULL))
       {
-        if (buttonsHandler != NULL)
-        {
-          buttonsHandler(PRESSED, currentButton);
-        }
+        buttonsHandler(PRESSED, currentButton);
       }
     }
   }

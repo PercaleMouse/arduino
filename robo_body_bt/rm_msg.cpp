@@ -5,7 +5,7 @@
 using namespace robot_mitya;
 
 #ifdef USBCON
-  #define ROBO_SERIAL Serial1
+  #define ROBO_SERIAL Serial//1
   #define DEBUG_SERIAL Serial
 #else
   #define ROBO_SERIAL Serial

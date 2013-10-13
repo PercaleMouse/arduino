@@ -1,6 +1,5 @@
 #include "rm_btn.h"
 #include "rm_cfg.h"
-#include "rm_msg.h"
 
 #include <Arduino.h>
 
@@ -8,44 +7,71 @@ using namespace robot_mitya;
 
 static const int NUMBER_OF_BUTTONS = 5;
 static const int buttonValues[NUMBER_OF_BUTTONS] = { 30, 150, 360, 535, 760 };
-static int previousButton = -1;
+static Button currentButton = NONE;
+static Button previousButton = NONE;
+static Button pressedButton = NONE;
 
-void RomeoButtons::initialize()
+static boolean waiting = false;
+static unsigned long nextTimeMillis = 0;
+static const unsigned long DELAY_MILLIS = 50;
+
+static RomeoButtonsHandler buttonsHandler;
+
+void RomeoButtons::initialize(int buttonsPin)
 {
-  pinMode(Cfg::BUTTONS_PIN, INPUT);
+  pinMode(buttonsPin, INPUT);
+  buttonsHandler = NULL;
 }
 
-void RomeoButtons::refresh()
+void RomeoButtons::setHandler(RomeoButtonsHandler handler)
 {
-  int analogValue = analogRead(Cfg::BUTTONS_PIN);
-  int button = getButton(analogValue);
-  if (button != previousButton)
+  buttonsHandler = handler;
+}
+
+void RomeoButtons::refresh(int analogButtonsValue)
+{
+  if (!waiting)
   {
-    delay(1000);      // wait for debounce time
-    analogValue = analogRead(Cfg::BUTTONS_PIN);
-    button = getButton(analogValue);
-    if (button != previousButton)
+    currentButton = getButton(analogButtonsValue);
+  }
+  if (currentButton != previousButton)
+  {
+    unsigned long currentTimeMillis = millis();
+    if (!waiting)
     {
-      previousButton = button;
-      if (button >= 0)
+      waiting = true;
+      nextTimeMillis = currentTimeMillis + DELAY_MILLIS;
+      return;
+    }    
+    if (currentTimeMillis >= nextTimeMillis) waiting = false;
+    else return;
+      
+    currentButton = getButton(analogButtonsValue);
+    if (currentButton != previousButton)
+    {
+      previousButton = currentButton;
+      if ((currentButton != pressedButton) && (pressedButton != NONE) && (buttonsHandler != NULL))
       {
-        Message::debugOutput("pressed: s" + String(button + 1));
+        buttonsHandler(RELEASED, pressedButton);
+      }
+      pressedButton = currentButton;
+      if ((currentButton != NONE) && (buttonsHandler != NULL))
+      {
+        buttonsHandler(PRESSED, currentButton);
       }
     }
   }
 }
 
-int RomeoButtons::getButton(int analogValue)
+Button RomeoButtons::getButton(int analogValue)
 {
   for (int i = 0; i < NUMBER_OF_BUTTONS; i++)
   {
-//    delay(100);
     if (analogValue < buttonValues[i])
     {
-//      Message::debugOutput(String(analogValue));
-      return i;  
+      return (Button)i;  
     }
   }
-  return -1;
+  return (Button)-1;
 }
 
