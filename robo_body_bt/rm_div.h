@@ -26,15 +26,15 @@ namespace robot_mitya
       // Return value is measured voltage * 100
       unsigned int getVoltage();
       
-      void setTimer(unsigned int timerDelay, void (*handler)(int, unsigned int) /* param1 - divider index, param2 - voltage */);
+      void setTimer(unsigned long timerDelay, void (*handler)(int, unsigned int) /* param1 - divider index, param2 - voltage */);
       void refresh();
     private:
       int dividerIndex;
       int dividerPin;
       float voltRatio;
       boolean timerEnabled;
-      unsigned int timerDelay;
-      unsigned int timerLastTime;
+      unsigned long timerDelay;
+      unsigned long timerNextTime;
       void (*timerHandler)(int, unsigned int); // param1 - divider index, param2 - voltage
   };
 }

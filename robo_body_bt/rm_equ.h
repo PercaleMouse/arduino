@@ -33,7 +33,7 @@ namespace robot_mitya
       
       static unsigned int getVoltageDividerPinValue(int dividerPin);
       static unsigned int getVoltage(int dividerIndex);
-      static void setVoltageTimer(int dividerIndex, int timerDelay, void (*handler)(int, unsigned int));
+      static void setVoltageTimer(int dividerIndex, unsigned long timerDelay, void (*handler)(int, unsigned int));
     private:
       static void buttonsHandler(ButtonState buttonState, Button button);
   };

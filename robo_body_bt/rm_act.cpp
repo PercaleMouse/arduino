@@ -57,7 +57,7 @@ void Action::execute(String command, int value)
     Equipment::setHeadlightState(value);
     processedCommand = true;
   }
-  
+
   if (command == "=")
   {
     int voltageDividerIndex = value >> 12;
@@ -79,6 +79,48 @@ void Action::execute(String command, int value)
   {
     Message::sendResult(Message::RET_OK);
   }
+}
+
+boolean Action::isMotorCommand(String command)
+{
+  return (command == "L") || (command == "R") || (command == "G");
+}
+
+boolean Action::isMoveHeadCommand(String command)
+{
+  return (command == "H") || (command == "V");
+}
+
+boolean Action::isRotateHeadCommand(String command)
+{
+  return (command == "h") || (command == "v");
+}
+
+boolean Action::isSwingHeadCommand(String command)
+{
+  return (command == "y") || (command == "n");
+}
+
+boolean Action::isMoveTailCommand(String command)
+{
+  return (command == "T");
+}
+
+boolean Action::isSwingTailCommand(String command)
+{
+  return (command == "t");
+}
+
+void Action::voltageTimerHandler(int voltageDivider, unsigned int voltage)
+{
+  Message::send("~", voltage);
+}
+
+
+
+
+
+
 
 //  switch(command[0]) {  // Сейчас у нас односимвольные команды, но на случай развития команда определена как String
 //    case 'M':
@@ -153,39 +195,4 @@ void Action::execute(String command, int value)
 ////      irrecv.enableIRIn(); // (надо для повторной инициализации ИК-приёмника)
 ////      break;
 ////    }
-}
 
-boolean Action::isMotorCommand(String command)
-{
-  return (command == "L") || (command == "R") || (command == "G");
-}
-
-boolean Action::isMoveHeadCommand(String command)
-{
-  return (command == "H") || (command == "V");
-}
-
-boolean Action::isRotateHeadCommand(String command)
-{
-  return (command == "h") || (command == "v");
-}
-
-boolean Action::isSwingHeadCommand(String command)
-{
-  return (command == "y") || (command == "n");
-}
-
-boolean Action::isMoveTailCommand(String command)
-{
-  return (command == "T");
-}
-
-boolean Action::isSwingTailCommand(String command)
-{
-  return (command == "t");
-}
-
-void Action::voltageTimerHandler(int voltageDivider, unsigned int voltage)
-{
-  Message::send("~", voltage);
-}

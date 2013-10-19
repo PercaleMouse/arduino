@@ -6,7 +6,7 @@
 using namespace robot_mitya;
 
 static const int NUMBER_OF_BUTTONS = 5;
-static const int buttonValues[NUMBER_OF_BUTTONS] = { 30, 150, 360, 535, 760 };
+static const int buttonValues[NUMBER_OF_BUTTONS] = { 50, 180, 370, 550, 780 };
 static Button currentButton = NONE;
 static Button previousButton = NONE;
 static Button pressedButton = NONE;
@@ -47,6 +47,10 @@ void RomeoButtons::refresh(int analogButtonsValue)
     else return;
       
     currentButton = getButton(analogButtonsValue);
+    
+    Serial.println(analogButtonsValue);
+    delay(500);
+    
     if (currentButton != previousButton)
     {
       previousButton = currentButton;

@@ -30,6 +30,8 @@ void setup()
   
   // Initializing controller's pins, motors, servos and headlights states
   Equipment::initialize();
+
+  Message::debugOutput("------------- Robot Mitya -------------");
 }
 
 // Sketch iteration

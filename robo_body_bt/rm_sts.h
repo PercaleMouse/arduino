@@ -13,7 +13,7 @@
 
 namespace robot_mitya
 {
-  enum ButtonsControlMode { HEAD_CONTROL, MOTORS_CONTROL, OTHER_CONTROL };
+  enum ButtonsControlMode { DISABLED, HEAD_CONTROL, MOTORS_CONTROL, OTHER_CONTROL };
   
   class State
   {

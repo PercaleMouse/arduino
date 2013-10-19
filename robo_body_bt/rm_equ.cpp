@@ -62,8 +62,11 @@ void Equipment::initialize()
   moveMotor("G", 0);
 
   // Initializing buttons:
-  RomeoButtons::initialize(Cfg::BUTTONS_PIN);
-  RomeoButtons::setHandler(Equipment::buttonsHandler);
+  if (Cfg::USE_BUTTONS)
+  {
+    RomeoButtons::initialize(Cfg::BUTTONS_PIN);
+    RomeoButtons::setHandler(Equipment::buttonsHandler);
+  }
   
   // Initializing robot's state:
   State::initialize();
@@ -93,7 +96,10 @@ void Equipment::refresh()
   }
   
   // Handle buttons.
-  RomeoButtons::refresh(analogRead(Cfg::BUTTONS_PIN));
+  if (Cfg::USE_BUTTONS)
+  {
+    RomeoButtons::refresh(analogRead(Cfg::BUTTONS_PIN));
+  }
   
   // For Leonardo (Romeo V2) board we use SoftwareServo library because of Timers lack.
   #ifdef USBCON
@@ -169,6 +175,7 @@ void Equipment::moveTail(int degree)
 void Equipment::swingTail(int mode)
 {
   servoTail->stop();
+  moveTail(Cfg::SERVO_TAIL_DEFAULT_STATE);
   if ((mode == 1) || (mode == 2))
   {
     servoTail->startSwing(mode, 250, 6, 70, 0.9, true);
@@ -220,7 +227,7 @@ unsigned int Equipment::getVoltage(int dividerIndex)
   return 0;
 }
 
-void Equipment::setVoltageTimer(int dividerIndex, int timerDelay, void (*handler)(int, unsigned int))
+void Equipment::setVoltageTimer(int dividerIndex, unsigned long timerDelay, void (*handler)(int, unsigned int))
 {
   if (dividerIndex == Cfg::VOLTAGE_BATTERY_DIVIDER_INDEX)
   {
@@ -237,37 +244,58 @@ void Equipment::buttonsHandler(ButtonState buttonState, Button button)
   if (button == S5)
   {
     if (buttonState == PRESSED) State::setNextButtonsControlMode();
+    return;
   }
-  
-  if (State::getButtonsControlMode() == OTHER_CONTROL)
+
+  switch (State::getButtonsControlMode())
   {
-    if (button == S2)
+    case HEAD_CONTROL:
     {
-      if (buttonState == PRESSED) Action::execute("I", 1);
-      else if (buttonState == RELEASED) Action::execute("I", 0);
+      int const period = buttonState == PRESSED ? 400 : 0;
+      switch (button)
+      {
+        // Right:
+        case S1: Action::execute("h", -period); break;
+        // Forward:
+        case S2: Action::execute("v", -period); break;
+        // Left:
+        case S3: Action::execute("h", period); break;
+        // Backward:
+        case S4: Action::execute("v", period); break;
+      }
+      break;
+    }
+    case MOTORS_CONTROL:
+    {
+      int const speed = buttonState == PRESSED ? 128 : 0;
+      switch (button)
+      {
+        // Right:
+        case S1: Action::execute("L", speed); Action::execute("R", -speed); break;
+        // Forward:
+        case S2: Action::execute("G", speed); break;
+        // Left:
+        case S3: Action::execute("L", -speed); Action::execute("R", speed); break;
+        // Backward:
+        case S4: Action::execute("G", -speed); break;
+      }
+      break;
+    }
+    case OTHER_CONTROL:
+    {
+      switch (button)
+      {
+        // Right:
+        case S1: break;
+        // Forward:
+        case S2: buttonState == PRESSED ? Action::execute("I", 1) : Action::execute("I", 0); break;
+        // Left:
+        case S3: break;
+        // Backward:
+        case S4: if (buttonState == PRESSED) Action::execute("t", 1); break;
+      }
+      break;
     }
   }
-/*
-  String s = "";
-  
-  if (buttonState == PRESSED)
-    s += "pressed ";
-  else if (buttonState == RELEASED)
-    s += "released ";
-  else
-    s += "bad state ";
-    
-  switch (button)
-  {
-    case S1: s += "S1"; break;
-    case S2: s += "S2"; break;
-    case S3: s += "S3"; break;
-    case S4: s += "S4"; break;
-    case S5: s += "S5"; break;
-    default: s += "bad button";
-  }
-  
-  Message::debugOutput(s);
-*/
 }
 
