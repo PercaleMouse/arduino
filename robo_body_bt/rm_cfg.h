@@ -20,7 +20,7 @@ namespace robot_mitya
       static const int MESSAGELENGTH = 5;
       // Echo-mode - all commands sent to robot will be returned back.
       // This is a debug option.
-      static const boolean ECHO_MODE = true;
+      static const boolean ECHO_MODE = false;
       
       // Pins to control DC drive motors.
       static const int MOTOR_LEFT_SPEED_PIN = 5;
@@ -39,9 +39,9 @@ namespace robot_mitya
       // Romeo buttons
       static const boolean USE_BUTTONS = true;
       // Romeo V2.0 buttons.
-//      static const int BUTTONS_PIN = A0;
+      static const int BUTTONS_PIN = A0;
       // Romeo V1.1 buttons.
-      static const int BUTTONS_PIN = A7;
+//      static const int BUTTONS_PIN = A7;
       
       // Boundary values for servos.
       static const int SERVO_HEAD_HORIZONTAL_MIN_DEGREE = 0;
